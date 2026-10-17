@@ -5,7 +5,7 @@ import pandasql as ps
 
     # file import
 if "raw_dataset" not in st.session_state:
-    st.session_state["raw_dataset"] = pd.read_csv("csvs/data-5.csv")
+    st.session_state["raw_dataset"] = pd.read_csv("data-5.csv")
 raw_dataset = st.session_state["raw_dataset"]
 
     # basic function setting
