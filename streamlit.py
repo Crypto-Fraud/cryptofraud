@@ -6,7 +6,6 @@ import sqlite3
 from sklearn.model_selection import train_test_split
 
 df = pd.read_csv("data-5.csv")
-med = df.median(numeric_only=True)   # typical values from the data, used as starting values
 
 # load the model and the scaler we saved in Project.ipynb (trained on the 9 columns)
 # before there was nothing here, the app didnt use the model at all, it just showed the columns
@@ -20,7 +19,7 @@ dataset_path = "data-5.csv"
 dataset = pd.read_csv(dataset_path)
 
 cleaned = dataset[["amount", "wallet_age_days", "avg_inter_tx_interval_s", "std_inter_tx_interval_s",
-                             "balance_change", "kyc_tier", "fraud"]]
+                            "kyc_tier", "fraud"]]
 
 
 
@@ -57,23 +56,13 @@ with col3:
      avg_inter_tx_interval_s = st.number_input("Seconds between the wallet's transactions",min_value=0,step=1,value=None) 
      st.write("You entered:", avg_inter_tx_interval_s)
 
-c1,c2,c3 = st.columns(3,vertical_alignment="bottom")
+c1,c2 = st.columns(2,vertical_alignment="bottom")
 
 with c1:
      std_inter_tx_interval_s = st.number_input("Standard deviation of that interval",min_value=0,step=1,value=None)
      st.write("You entered:",  std_inter_tx_interval_s)
 
 with c2:
-     balance_change= st.number_input("Net change for the sender",value=None)
-     st.write("You entered:", balance_change)
- 
-with c3:
-     new_address_fraction = st.number_input("New address share",min_value=0.000,max_value=1.000,step=0.001,format="%.3f",value=None)
-     st.write("You entered:", new_address_fraction)
-
-cl1,cl2,cl3 = st.columns(3,vertical_alignment="bottom")
-
-with cl1:
      kyc_tier = st.selectbox("Account verification stage", ["unverified","basic","full"],index=None)
      st.write("You entered:", kyc_tier)
 
@@ -129,15 +118,38 @@ with cl1:
           gas_price_pctile = round(df["gas_price_pctile"].mean())
 
 with cl2:
-     weekend = st.checkbox("Weekend (Saturday or Sunday)")
-     is_weekend=1 if weekend else 0
-     st.write("You entered:",  is_weekend)
-     if is_weekend is None:
-               is_weekend = round(df["is_weekend"].mean())
+     weekend= st.radio("Weekend (Saturday or Sunday)",["Yes","No"],
+     index=None,
+     horizontal=True)
+
+     if weekend=="Yes":
+          is_weekend=1
+     elif weekend=="No":
+          is_weekend=0
+     else:
+          is_weekend=None
+     st.write("You entered:",is_weekend)
+     
  
 with cl3:
      time_since_prev_tx_s = st.number_input("Seconds since the wallet's previous transaction",min_value=0,step=1,value=None)
      st.write("You entered:", time_since_prev_tx_s)
+     if time_since_prev_tx_s is None:
+          time_since_prev_tx_s = round(df["time_since_prev_tx_s"].mean())
+
+cll1,cll2= st.columns(2,vertical_alignment="bottom")
+
+with cll1:
+     balance_change= st.number_input("Net change for the sender",value=None)
+     st.write("You entered:", balance_change)
+     if balance_change is None:
+               balance_change = round(df["balance_change"].mean(),2)
+     
+with cll2:
+     new_address_fraction = st.number_input("New address share",min_value=0.000,max_value=1.000,step=0.001,format="%.3f",value=None)
+     st.write("You entered:", new_address_fraction)
+     if new_address_fraction is None:
+                    new_address_fraction = round(df["new_address_fraction"].mean(),3)
 
 
 
@@ -188,8 +200,6 @@ if st.button("Submit", type="primary", width="stretch"):
           "wallet_age_days",
           "avg_inter_tx_interval_s",
           "std_inter_tx_interval_s",
-          "balance_change",
-          "new_address_fraction",
           "kyc_tier"
      ]
 
