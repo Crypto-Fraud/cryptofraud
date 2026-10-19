@@ -5,7 +5,6 @@ from joblib import load
 import sqlite3
 from sklearn.model_selection import train_test_split
 
-df = pd.read_csv("data-5.csv")
 
 # load the model and the scaler we saved in Project.ipynb (trained on the 9 columns)
 # before there was nothing here, the app didnt use the model at all, it just showed the columns
@@ -14,12 +13,15 @@ scaler = load("scaler.joblib")
 
 
 #cleaning the dataset
-dataset_path = "data-5.csv" 
 
-dataset = pd.read_csv(dataset_path)
+if "raw_dataset" not in st.session_state:
+    st.session_state["raw_dataset"] = pd.read_csv("data-5.csv")
+df = dataset = st.session_state["raw_dataset"]
+
 
 cleaned = dataset[["amount", "wallet_age_days", "avg_inter_tx_interval_s", "std_inter_tx_interval_s",
                             "kyc_tier", "fraud"]]
+
 
 
 
@@ -28,6 +30,8 @@ cleaned = dataset[["amount", "wallet_age_days", "avg_inter_tx_interval_s", "std_
 # same split as when the model was trained (train_size=0.8, random_state=52)
 train_rows, _ = train_test_split(df, train_size=0.8, random_state=52)
 train_rows = train_rows.reset_index(drop=True)
+
+df = train_rows
 
 def nearest_transactions(X_scaled, k=3):
      # returns the k past transactions closest to the new one, with their distance
@@ -74,19 +78,19 @@ with op1:
      tx_hour  = st.number_input("Hour of day (0-23)",min_value=0,max_value=23,step=1,value=None)
      st.write("You entered:", tx_hour )
      if tx_hour is None:
-          tx_hour= round(df["tx_hour"].mean())
+          tx_hour= df["tx_hour"].mean()
 
 with op2:
      input_count = st.number_input("Number of inputs funding the transaction",min_value=1,step=1,value=None)
      st.write("You entered:",input_count)
      if input_count is None:
-          input_count = round(df["input_count"].mean())
+          input_count = df["input_count"].mean()
 
 with op3:
      output_count = st.number_input("Number of outputs",min_value=1,step=1,value=None)
      st.write("You entered:", output_count)
      if output_count is None:
-          output_count = round(df["output_count"].mean())
+          output_count = df["output_count"].mean()
      
 c1,c2,c3 = st.columns(3,vertical_alignment="bottom")
 
@@ -94,20 +98,20 @@ with c1:
      tx_count_24h = st.number_input("Wallet's transactions in the last 24h",min_value=0,step=1,value=None)
      st.write("You entered:", tx_count_24h)
      if tx_count_24h is None:
-          tx_count_24h = round(df["tx_count_24h"].mean())
+          tx_count_24h = df["tx_count_24h"].mean()
 
 
 with c2:
      unique_counterparties_24h = st.number_input("Different wallets touched in the last 24h",min_value=0,step=1,value=None)
      st.write("You entered:", unique_counterparties_24h)
      if unique_counterparties_24h is None:
-          unique_counterparties_24h = round(df["unique_counterparties_24h"].mean())
+          unique_counterparties_24h = df["unique_counterparties_24h"].mean()
  
 with c3:
      max_graph_hop = st.number_input("Hop distance of the deepest recipient",min_value=1,step=1,value=None)
      st.write("You entered:", max_graph_hop)
      if max_graph_hop is None:
-          max_graph_hop = round(df["max_graph_hop"].mean())
+          max_graph_hop = df["max_graph_hop"].mean()
 
 cl1,cl2,cl3 = st.columns(3,vertical_alignment="bottom")
 
@@ -115,7 +119,7 @@ with cl1:
      gas_price_pctile = st.number_input("Fee urgency percentile",min_value=0,max_value=100,step=1,value=None)
      st.write("You entered:", gas_price_pctile)
      if gas_price_pctile is None:
-          gas_price_pctile = round(df["gas_price_pctile"].mean())
+          gas_price_pctile = df["gas_price_pctile"].mean()
 
 with cl2:
      weekend= st.radio("Weekend (Saturday or Sunday)",["Yes","No"],
@@ -135,7 +139,8 @@ with cl3:
      time_since_prev_tx_s = st.number_input("Seconds since the wallet's previous transaction",min_value=0,step=1,value=None)
      st.write("You entered:", time_since_prev_tx_s)
      if time_since_prev_tx_s is None:
-          time_since_prev_tx_s = round(df["time_since_prev_tx_s"].mean())
+          time_since_prev_tx_s = df["time_since_prev_tx_s"].mean()
+
 
 cll1,cll2= st.columns(2,vertical_alignment="bottom")
 
@@ -143,13 +148,13 @@ with cll1:
      balance_change= st.number_input("Net change for the sender",value=None)
      st.write("You entered:", balance_change)
      if balance_change is None:
-               balance_change = round(df["balance_change"].mean(),2)
+               balance_change = df["balance_change"].mean()
      
 with cll2:
      new_address_fraction = st.number_input("New address share",min_value=0.000,max_value=1.000,step=0.001,format="%.3f",value=None)
      st.write("You entered:", new_address_fraction)
      if new_address_fraction is None:
-                    new_address_fraction = round(df["new_address_fraction"].mean(),3)
+                    new_address_fraction = df["new_address_fraction"].mean()
 
 
 
@@ -179,7 +184,7 @@ if st.button("Submit", type="primary", width="stretch"):
           "is_weekend":is_weekend,
           "time_since_prev_tx_s":time_since_prev_tx_s,
           }
-     st.success("Transaction saved!!!")
+
      
 
      df = pd.DataFrame([{
